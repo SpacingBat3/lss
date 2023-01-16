@@ -1,0 +1,12 @@
+# Ignore compilation results
+dist/
+types/
+# Ignore cache
+cache/
+# Ignore modules
+node_modules/
+# Ignore foreign lockfile
+*lock*
+!package-lock.json
+# Ignore package archives
+*.tgz

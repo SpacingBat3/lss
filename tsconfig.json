@@ -1,0 +1,30 @@
+{
+    "extends": "@tsconfig/strictest/tsconfig.json",
+    "compilerOptions": {
+        "module": "Node16",
+        "target": "ES2021",
+        /* Whenever incremental compilation is enabled */
+        "incremental": true,
+        /* File containing saved information about incremental compilation */
+        "tsBuildInfoFile": "cache/tsc.json",
+        /* Whenever sourcemaps should be made for emitted JavaScript files */
+        "sourceMap": true,
+        /* Whenever emit declaration files */
+        "declaration": true,
+        /* Directrories in which are placed all emitted files */
+        "outDir": "./dist/",           //.js
+        "declarationDir": "./types/",  //.d.ts
+        "rootDir": "./src/",           //.ts
+        /* Replace a set of core libraries. */
+        "lib": ["ES2022", "DOM.Iterable"],
+        /* Limit module resolution to project's path only */
+        "typeRoots": ["./node_modules/@types"],
+        /* Enforce consistent casing for imported module names */
+        "forceConsistentCasingInFileNames": true,
+        /* Use *nix end-of-line character for emitted files */
+        "newLine": "lf",
+        /* Do not emit anything when there's an error in source files */
+        "noEmitOnError": true
+    },
+    "files": ["src/lib.ts", "src/lib.mts"]
+}

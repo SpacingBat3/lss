@@ -1,0 +1,48 @@
+{
+  "name": "@spacingbat3/lss",
+  "version": "1.0.0",
+  "description": "LSS: Literal String Sanitizer – sanitizes string based on specific inputs and tries to guess the accurate type (in TypeScript/Typed JS).",
+  "main": "./dist/lib.js",
+  "module": "./dist/lib.mjs",
+  "types": "./types/lib.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./types/lib.d.mts",
+        "default": "./dist/lib.mjs"
+      },
+      "default": {
+        "types": "./types/lib.d.ts",
+        "default": "./dist/lib.d.js"
+      }
+    }
+  },
+  "scripts": {
+    "prepack": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SpacingBat3/lss.git"
+  },
+  "keywords": [
+    "typescript",
+    "sanitizer",
+    "static",
+    "type",
+    "string",
+    "template",
+    "literal"
+  ],
+  "author": "SpacingBat3 <git@spacingbat3.anonaddy.com> (https://github.com/SpacingBat3)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/SpacingBat3/lss/issues"
+  },
+  "homepage": "https://github.com/SpacingBat3/lss#readme",
+  "devDependencies": {
+    "@tsconfig/strictest": "^1.0.2"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}
