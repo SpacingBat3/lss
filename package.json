@@ -13,7 +13,7 @@
       },
       "default": {
         "types": "./types/lib.d.ts",
-        "default": "./dist/lib.d.js"
+        "default": "./dist/lib.js"
       }
     }
   },
