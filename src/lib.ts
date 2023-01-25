@@ -7,6 +7,8 @@
 /**
  * Sets of chars that are correctly understood by current engine and can be
  * transformed to valid {@link charset}.
+ * 
+ * @since v1.0.0
  */
 export const parseableRange = Object.freeze(["a-z","A-Z","0-9","---"] as const);
 
@@ -14,7 +16,7 @@ export const parseableRange = Object.freeze(["a-z","A-Z","0-9","---"] as const);
  * Like `unknown`, except it includes some primitive type just so generics can
  * pick any commonly-used primitive type.
  */
-type unknownLiteral = null|undefined|object|string|number|bigint;
+export type unknownLiteral = null|undefined|object|string|number|bigint;
 
 type stringify<T> = T extends number ? `${T}` : T extends string ? T : string;
 
@@ -22,7 +24,7 @@ type stringify<T> = T extends number ? `${T}` : T extends string ? T : string;
  * Splits `T` to the union of chars. If `T` is an empty string, it resolves to
  * `never`.
  */
-type charset<T extends string> = T extends `${infer C extends string}${infer R extends string}`
+export type charset<T extends string> = T extends `${infer C extends string}${infer R extends string}`
   ? C|charset<R> : T extends "" ? never : T;
 
 /**
@@ -102,14 +104,14 @@ type charGroups<T extends string> = T extends `${infer S extends string}-${infer
   ? S extends "" ? charGroups<R> : `${lastChar<S>}-${E}`|charGroups<R> : never;
 
 /**
- * Transforms {@link sanitizeLiteral} function parameters to provide an expected
+ * Transforms {@link sanitizeResult} function parameters to provide an expected
  * result type for a given set of literals.
  * 
  * @template V - Value to be sanitized.
  * @template C - A charset to be used for sanitization.
  * @template R - A replacement character to be used for sanitization.
  */
-type sanitizeResult<V,C extends string,R extends string> = V extends null|undefined ? V :
+export type sanitizeResult<V,C extends string,R extends string> = V extends null|undefined ? V :
   R extends ensureChar<R> ? charGroups<C> extends parseableRange ? V extends string|number ?
   ensureNonEmpty<sanitizeReplace<sanitizeSlice<sanitizeCase<stringify<V>,C>,C>,C,R>> : string : never : never;
 
@@ -120,7 +122,7 @@ type sanitizeResult<V,C extends string,R extends string> = V extends null|undefi
  * 
  * @remarks
  * 
- * It is designed to be rather performant at runtime (it uses `RegExp`
+ * It is designed to be rather performant at runtime (it uses [`RegExp`]
  * under-the-hood), however be aware of long compilation times as TypeScript
  * will have to do heavy calculations for function result in case of complex
  * strings and character sets (a lot of values a transformed in char-by-char
@@ -128,6 +130,8 @@ type sanitizeResult<V,C extends string,R extends string> = V extends null|undefi
  * TypeScript will just give up at calculations and end compilation with an
  * error!). There are also no complete guarantees types will be accurate for all
  * cases, althrough that should be considered as a bug.
+ * 
+ * [`RegExp`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
  * 
  * @privateRemarks
  * 
@@ -139,8 +143,8 @@ type sanitizeResult<V,C extends string,R extends string> = V extends null|undefi
  * @param charset - A string that represents a set of characters. For ranges, only values from {@link parseableRange} are valid.
  * @param replacement - A `char` (i.e. `string` with `length === 0`) which should replace invalid characters inside the string.
  * 
- * @returns - {@link value} for nullish values, sanitized string for anything else.
- * @throws  - {@link TypeError} for unresoveable {@link charset}, {@link RangeError} for non-char values in {@link replacement} and {@link Error} for {@link value} which cannot be sanitized to the expected {@link charset}.
+ * @returns - Original {@link value} for nullish values, sanitized string for anything else.
+ * @throws  - [`TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError) for unresolveable {@link charset}, [`RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError) for non-char values in {@link replacement} and [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) for {@link value} which cannot be sanitized to the expected {@link charset}.
  * 
  * @example
  * 
@@ -156,7 +160,7 @@ type sanitizeResult<V,C extends string,R extends string> = V extends null|undefi
  * @since v1.0.0
  * @experimental
  */
-export default function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z0-9",R extends string = "-">(value:V, charset="a-z0-9" as C, replacement="-" as R): sanitizeResult<V,C,R> {
+export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z0-9",R extends string = "-">(value:V, charset="a-z0-9" as C, replacement="-" as R): sanitizeResult<V,C,R> {
   if(value === null || value === undefined)
     return value as sanitizeResult<V,C,R>;
   if((charset.match(/([^])-([^])/gm)??[]).find(element => !["a-z","A-Z","0-9","---"].includes(element)) !== undefined)
@@ -189,3 +193,5 @@ export default function sanitizeLiteral<V extends unknownLiteral,C extends strin
     throw new Error("Parameter 'name' is not sanitizable!");
   return valueString as sanitizeResult<V,C,R>;
 }
+
+export default sanitizeLiteral;

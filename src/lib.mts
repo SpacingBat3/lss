@@ -1,4 +1,17 @@
-// ESM wrapper for "./lib.js"
-import module from "./lib.js";
-export const parseableRange = module.parseableRange;
-export default module.default;
+/*
+ * ESM wrapper for "./lib.js"
+ */
+// Module exports
+import {parseableRange, sanitizeLiteral} from "./lib.js";
+export default sanitizeLiteral;
+export {
+  parseableRange,
+  sanitizeLiteral
+};
+// Type exports
+import type { charset, sanitizeResult, unknownLiteral } from "./lib.js";
+export type {
+  charset,
+  sanitizeResult,
+  unknownLiteral
+};
