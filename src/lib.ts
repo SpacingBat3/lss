@@ -24,8 +24,11 @@ type stringify<T> = T extends number ? `${T}` : T extends string ? T : string;
  * Splits `T` to the union of chars. If `T` is an empty string, it resolves to
  * `never`.
  */
-export type charset<T extends string> = T extends `${infer C extends string}${infer R extends string}`
-  ? C|charset<R> : T extends "" ? never : T;
+export type charset<T extends string> = (
+  T extends `${infer C extends string}${infer R extends string}` ? (
+    C | charset<R>
+  ) : T extends "" ? never : T
+);
 
 /**
  * A union of letters from English alphabet (lowercase).
@@ -42,11 +45,13 @@ type parseableRange = (typeof parseableRange)[number];
 /**
  * Maps given {@link parseableRange} to {@link charset}.
  */
-type extendRange<T extends parseableRange> = T extends "a-z" ? char :
-  T extends "A-Z" ? Uppercase<char> : T extends "0-9" ? digit :
-  T extends "---" ? "-" : never;
+type extendRange<T extends parseableRange> = (
+  T extends "a-z" ? char : T extends "A-Z" ? Uppercase<char> : (
+    T extends "0-9" ? digit : T extends "---" ? "-" : never
+  )
+);
 
-type range2charset<T extends string> = T extends parseableRange ? extendRange<T> :
+type range2charset<T extends string> = T extends parseableRange ? extendRange<T> : (
   // a-z
   T extends `${infer F extends "a-z"}${string}` ? (
     T extends `${F}${infer R extends string}` ? extendRange<F>|range2charset<R> : never
@@ -60,48 +65,72 @@ type range2charset<T extends string> = T extends parseableRange ? extendRange<T>
   ) : T extends `${infer F extends string}${infer R extends string}` ? (
     charset<F>|range2charset<R>
   // empty string
-  ) : never;
+  ) : never
+);
 
-type sanitizeCase<T extends string,C extends string> = C extends `${string}${char}${string}` ?
-    C extends `${string}${Uppercase<char>}${string}` ? T : Lowercase<T> : Uppercase<T>;
+type _case<T extends string,C extends string> = (
+  // Charset contains any letter from English alphabet?
+  C extends `${string}${char}${string}` ? (
+    // Charset contains any upperCase English letter?
+    C extends `${string}${Uppercase<char>}${string}` ? T : Lowercase<T>
+  ) : Uppercase<T>
+);
 /**
  * A generic type which modifies literal string to replace `T` string with `R`
  * replacement character based on `C` charset. It should work exactly the same
- * as runtime function does when combined with {@link sanitizeSlice}.
+ * as runtime function does when combined with {@link _slice}.
  */
-type sanitizeReplace<T extends string,C extends string,R extends string> = (
+type _replace<T extends string,C extends string,R extends string> = (
   // F <- T[0], S <- T[1..N]
   T extends `${infer F extends string}${infer S extends string}` ? (
     // Leave valid chars as-is:
     F extends range2charset<C> ? (
-      `${F}${sanitizeReplace<S,C,R>}`
+      `${F}${_replace<S,C,R>}`
     // Replace invalid chars with replacement character:
-    ) : `${R}${sanitizeReplace<S,C,R>}`
+    ) : `${R}${_replace<S,C,R>}`
   // Original type on empty or non-literal strings.
   ) : T
 );
 /**
  * Looks for the first occurance of char in `C` charset and slices string to it.
  * It should provide the same logic as in runtime function.
+ * 
+ * @template T - A value to be sliced.
+ * @template C - A charset used during sanitization.
  */
-type sanitizeSlice<T extends string,C extends string> = T extends `${infer F extends string}${infer R extends string}`
-  ? F extends range2charset<C> ? T : sanitizeSlice<R,C> : T;
+type _slice<T extends string,C extends string> = (
+  T extends `${infer F extends string}${infer R extends string}` ? (
+    F extends range2charset<C> ? T : _slice<R,C>
+  ) : T
+);
 /**
- * Ensures `T` string is a *char* (i.e. has `length === 1`). It will resolve to
- * `never` both for strings with multiple characters and empty strings.
+ * Ensures given string is a *char* (i.e. has `length === 1`). It will resolve
+ * to `never` both for strings with multiple characters and empty strings.
+ * 
+ * @template T - any `string`.
  */
-type ensureChar<T extends string> = T extends `${infer P extends string}${string}` ?
-  T extends P ? T : never : never;
+type ensureChar<T extends string> = (
+  T extends `${infer P extends string}${string}` ? (
+    T extends P ? T : never
+  ) : never
+);
 
-/** Ensures if given string is non-empty. Resolves to `never` otherwise. */
+/** Ensures given string is non-empty. Resolves to `never` otherwise. */
 type ensureNonEmpty<T extends string> = T extends "" ? never : T;
 
 /** Resolves to last character from the given string. */
-type lastChar<T extends string> = T extends `${string}${infer R extends string}` ? R extends "" ? T : lastChar<R> : T;
+type lastChar<T extends string> = (
+  T extends `${string}${infer R extends string}` ? (
+    R extends "" ? T : lastChar<R>
+  ) : T
+);
 
 /** Infers a set of chars from given string as a union type. */
-type charGroups<T extends string> = T extends `${infer S extends string}-${infer E extends string}${infer R extends string}`
-  ? S extends "" ? charGroups<R> : `${lastChar<S>}-${E}`|charGroups<R> : never;
+type charGroups<T extends string> = (
+  T extends `${infer S extends string}-${infer E extends string}${infer R extends string}` ? (
+    S extends "" ? charGroups<R> : `${lastChar<S>}-${E}`|charGroups<R>
+  ) : never
+);
 
 /**
  * Transforms {@link sanitizeResult} function parameters to provide an expected
@@ -111,9 +140,13 @@ type charGroups<T extends string> = T extends `${infer S extends string}-${infer
  * @template C - A charset to be used for sanitization.
  * @template R - A replacement character to be used for sanitization.
  */
-export type sanitizeResult<V,C extends string,R extends string> = V extends null|undefined ? V :
-  R extends ensureChar<R> ? charGroups<C> extends parseableRange ? V extends string|number ?
-  ensureNonEmpty<sanitizeReplace<sanitizeSlice<sanitizeCase<stringify<V>,C>,C>,C,R>> : string : never : never;
+export type sanitizeResult<V,C extends string,R extends string> = (
+  V extends null|undefined ? V : R extends ensureChar<R> ? (
+    charGroups<C> extends parseableRange ? V extends string|number ? (
+      ensureNonEmpty<_replace<_slice<_case<stringify<V>,C>,C>,C,R>>
+    ) : string : never
+  ) : never
+);
 
 /**
  * A type-safe string sanitizer supporting any set of chars while being capable
@@ -125,13 +158,13 @@ export type sanitizeResult<V,C extends string,R extends string> = V extends null
  * It is designed to be rather performant at runtime (it uses [`RegExp`]
  * under-the-hood), however be aware of long compilation times as TypeScript
  * will have to do heavy calculations for function result in case of complex
- * strings and character sets (a lot of values a transformed in char-by-char
+ * strings and character sets (a lot of operations are done in char-by-char
  * manner, using type recursion — there's a real chance that for long strings
  * TypeScript will just give up at calculations and end compilation with an
  * error!). There are also no complete guarantees types will be accurate for all
  * cases, althrough that should be considered as a bug.
  * 
- * [`RegExp`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp
+ * [`RegExp`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp "RegExp – JavaScript | MDN"
  * 
  * @privateRemarks
  * 
@@ -144,21 +177,20 @@ export type sanitizeResult<V,C extends string,R extends string> = V extends null
  * @param replacement - A `char` (i.e. `string` with `length === 0`) which should replace invalid characters inside the string.
  * 
  * @returns - Original {@link value} for nullish values, sanitized string for anything else.
- * @throws  - [`TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError) for unresolveable {@link charset}, [`RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError) for non-char values in {@link replacement} and [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error) for {@link value} which cannot be sanitized to the expected {@link charset}.
+ * @throws  - [`TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError "TypeError – JavaScript | MDN") for unresolveable {@link charset}, [`RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError "RangeError – JavaScript | MDN") for non-char values in {@link replacement} and [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error "Error – JavaScript | MDN") for {@link value} which cannot be sanitized to the expected {@link charset}.
  * 
  * @example
  * 
  * // (const) regular: "fooBar3"
  * const regular = "fooBar3" as const;
- * // (const) test1: "FOOBAR3"
- * const test1 = sanitizeLiteral(regular,"A-Z0-9");
- * // (const) test2: "foobarz"
- * const test2 = sanitizeLiteral(regular,"a-z","z");
- * // (const) test3: "oo_ar3"
- * const test3 = sanitizeLiteral(regular,"acdeghijklmnopqrstuvwxyz0-9","_");
+ * // (const) mod1: "FOOBAR3"
+ * const mod1 = sanitizeLiteral(regular,"A-Z0-9");
+ * // (const) mod2: "foobarz"
+ * const mod2 = sanitizeLiteral(regular,"a-z","z");
+ * // (const) mod3: "oo_ar3"
+ * const mod3 = sanitizeLiteral(regular,"acdeghijklmnopqrstuvwxyz0-9","_");
  * 
  * @since v1.0.0
- * @experimental
  */
 export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z0-9",R extends string = "-">(value:V, charset="a-z0-9" as C, replacement="-" as R): sanitizeResult<V,C,R> {
   if(value === null || value === undefined)
