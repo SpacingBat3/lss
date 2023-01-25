@@ -8,3 +8,6 @@ tsconfig*.json
 *lock*
 # TSC (maybe linter someday?) cache
 cache/
+# TypeDoc stuff
+typedoc.json
+docs/
