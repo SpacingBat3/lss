@@ -18,7 +18,14 @@
     }
   },
   "scripts": {
-    "prepack": "tsc"
+    "prepack": "tsc",
+    "make": "tsc",
+    "build": "tsc",
+    "compile": "tsc",
+    "doc": "typedoc",
+    "typedoc": "typedoc",
+    "jsdoc": "typedoc",
+    "tsdoc": "typedoc"
   },
   "repository": {
     "type": "git",
@@ -40,7 +47,9 @@
   },
   "homepage": "https://github.com/SpacingBat3/lss#readme",
   "devDependencies": {
-    "@tsconfig/strictest": "^1.0.2"
+    "@tsconfig/strictest": "^1.0.2",
+    "typedoc": "^0.23.24",
+    "typescript": "^4.9.4"
   },
   "publishConfig": {
     "access": "public"

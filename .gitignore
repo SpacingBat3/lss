@@ -1,6 +1,8 @@
 # Ignore compilation results
 dist/
 types/
+# Ignore auto-generated docs
+docs/
 # Ignore cache
 cache/
 # Ignore modules

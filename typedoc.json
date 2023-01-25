@@ -1,0 +1,29 @@
+{
+  "githubPages": true,
+  "hideGenerator": true,
+  "entryPoints": ["./src/lib.ts"],
+  "commentStyle": "jsdoc",
+  "visibilityFilters": {},
+  "lightHighlightTheme": "github-light",
+  "darkHighlightTheme": "github-dark",
+  "gitRemote": "https://github.com/SpacingBat3/lss.git",
+  "gitRevision": "master",
+  "excludeNotDocumented": false,
+  "excludeInternal": false,
+  "excludeExternals": false,
+  "excludePrivate": false,
+  "intentionallyNotExported": [
+    "ensureChar",
+    "ensureNonEmpty",
+    "sanitizeCase",
+    "sanitizeSlice",
+    "sanitizeReplace",
+    "parseableRange",
+    "stringify",
+    "charGroups"
+  ],
+  "sourceLinkTemplate": "https://github.com/SpacingBat3/lss/blob/{gitRevision}/{path}#L{line}",
+  "readme": "./README.md",
+  "name": "Literal String Sanitizer",
+  "theme": "default"
+}
