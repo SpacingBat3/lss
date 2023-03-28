@@ -212,7 +212,7 @@ export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z
   if(regexp.invalid.test(valueString)||valueString.startsWith(replacement)) {
     // Try to convert string to uppercase or lowercase based on charset.
     valueString = !/[A-Z]/.test(charset) ? valueString.toLowerCase() :
-      !/[a-z]/.test("a-z") ? valueString.toUpperCase() : valueString;
+      !/[a-z]/.test(charset) ? valueString.toUpperCase() : valueString;
     // A string sanitization logic
     valueString = valueString
       // Slice to the nearest valid character.
