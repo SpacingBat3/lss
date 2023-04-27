@@ -15,12 +15,11 @@
   "intentionallyNotExported": [
     "ensureChar",
     "ensureNonEmpty",
-    "sanitizeCase",
-    "sanitizeSlice",
-    "sanitizeReplace",
-    "parseableRange",
     "stringify",
-    "charGroups"
+    "charGroups",
+    "_case",
+    "_trimMode",
+    "_replace"
   ],
   "sourceLinkTemplate": "https://github.com/SpacingBat3/lss/blob/{gitRevision}/{path}#L{line}",
   "readme": "./README.md",
