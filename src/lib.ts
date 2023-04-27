@@ -18,6 +18,13 @@ export const parseableRange = Object.freeze(["a-z","A-Z","0-9","---"] as const);
  */
 export type unknownLiteral = null|undefined|object|string|number|bigint;
 
+/**
+ * A valid mode for trimming the string. `null` skips trimming entirely.
+ * 
+ * @since v1.2.0
+ */
+export type trimMode = null|"left"|"right"|"both";
+
 type stringify<T> = T extends number ? `${T}` : T extends string ? T : string;
 
 /**
@@ -78,7 +85,7 @@ type _case<T extends string,C extends string> = (
 /**
  * A generic type which modifies literal string to replace `T` string with `R`
  * replacement character based on `C` charset. It should work exactly the same
- * as runtime function does when combined with {@link _slice}.
+ * as runtime function does when combined with {@link _trimMode}.
  */
 type _replace<T extends string,C extends string,R extends string> = (
   // F <- T[0], S <- T[1..N]
@@ -91,18 +98,53 @@ type _replace<T extends string,C extends string,R extends string> = (
   // Original type on empty or non-literal strings.
   ) : T
 );
+
 /**
- * Looks for the first occurance of char in `C` charset and slices string to it.
- * It should provide the same logic as in runtime function.
- * 
- * @template T - A value to be sliced.
- * @template C - A charset used during sanitization.
+ * A helper generic type to trim string to remove leading chars outside of
+ * range.
  */
-type _slice<T extends string,C extends string> = (
+type _trimLeft<T extends string,C extends string> = (
   T extends `${infer F extends string}${infer R extends string}` ? (
-    F extends range2charset<C> ? T : _slice<R,C>
+    F extends range2charset<C> ? T : _trimLeft<R,C>
   ) : T
 );
+
+/**
+ * A helper generic type to trim string to remove trailing chars outside of
+ * range. Does not respect the left side of the string and assumes the first
+ * char found would be part of invalid chars on right side (which leaves empty
+ * string in such scenarios).
+ */
+type _trimRightPhase2<T extends string,C extends string> = (
+  T extends `${infer F extends string}${infer R extends string}` ? (
+    F extends range2charset<C> ? `${F}${_trimRightPhase2<R,C>}` : ""
+  ) : T
+);
+
+/**
+ * A helper generic type to trim string to remove trailing chars outside of
+ * range. Unlike to {@link _trimRightPhase2} it leaves leading chars untouched.
+ */
+type _trimRight<T extends string,C extends string> = (
+  T extends `${infer F extends string}${infer R extends string}` ? (
+    F extends range2charset<C> ? `${F}${_trimRightPhase2<R,C>}` : `${F}${_trimRight<R,C>}`
+  ) : T
+);
+
+/**
+ * Trims a string based on {@link trimMode} (`M`) parameter.
+ * It should provide the same logic as in runtime function.
+ * 
+ * @template T - A value to be trimmed.
+ * @template C - A charset used during sanitization.
+ * @template M - A way of trimming the string.
+ */
+type _trimMode<T extends string,C extends string,M extends trimMode> = (
+  M extends "right" ? _trimRight<T,C> : M extends "both" ? (
+    _trimRightPhase2<_trimLeft<T,C>,C>
+  ) : M extends "left" ? _trimLeft<T,C> : M extends null ? T : never
+);
+
 /**
  * Ensures given string is a *char* (i.e. has `length === 1`). It will resolve
  * to `never` both for strings with multiple characters and empty strings.
@@ -139,11 +181,12 @@ type charGroups<T extends string> = (
  * @template V - Value to be sanitized.
  * @template C - A charset to be used for sanitization.
  * @template R - A replacement character to be used for sanitization.
+ * @template M - A range of value trimming.
  */
-export type sanitizeResult<V,C extends string,R extends string> = (
+export type sanitizeResult<V,C extends string,R extends string, M extends trimMode> = (
   V extends null|undefined ? V : R extends ensureChar<R> ? (
     charGroups<C> extends parseableRange ? V extends string|number ? (
-      ensureNonEmpty<_replace<_slice<_case<stringify<V>,C>,C>,C,R>>
+      ensureNonEmpty<_replace<_trimMode<_case<stringify<V>,C>,C,M>,C,R>>
     ) : string : never
   ) : never
 );
@@ -173,11 +216,12 @@ export type sanitizeResult<V,C extends string,R extends string> = (
  * I will also use it for my own personal projects.
  * 
  * @param value - Value to sanitize. Should be a *non-nullish* `string`.
- * @param charset - A string that represents a set of characters. For ranges, only values from {@link parseableRange} are valid.
+ * @param charset - A string that represents a set of characters. For ranges, only values from {@linkcode parseableRange} are valid.
  * @param replacement - A `char` (i.e. `string` with `length === 0`) which should replace invalid characters inside the string.
+ * @param trimMode – Definies how string should be trimmed. Defaults to `left` (compatibility reasons).
  * 
  * @returns - Original {@link value} for nullish values, sanitized string for anything else.
- * @throws  - [`TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError "TypeError – JavaScript | MDN") for unresolveable {@link charset}, [`RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError "RangeError – JavaScript | MDN") for non-char values in {@link replacement} and [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error "Error – JavaScript | MDN") for {@link value} which cannot be sanitized to the expected {@link charset}.
+ * @throws  - [`TypeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError "TypeError – JavaScript | MDN") for unresolveable {@link charset} or invalid {@link trimMode}, [`RangeError`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError "RangeError – JavaScript | MDN") for non-char values in {@link replacement} and [`Error`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error "Error – JavaScript | MDN") for {@link value} which cannot be sanitized to the expected {@link charset}.
  * 
  * @example
  * 
@@ -192,9 +236,9 @@ export type sanitizeResult<V,C extends string,R extends string> = (
  * 
  * @since v1.0.0
  */
-export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z0-9",R extends string = "-">(value:V, charset="a-z0-9" as C, replacement="-" as R): sanitizeResult<V,C,R> {
+export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z0-9",R extends string = "-",M extends trimMode = "left">(value:V, charset="a-z0-9" as C, replacement="-" as R,trimMode="left" as M): sanitizeResult<V,C,R,M> {
   if(value === null || value === undefined)
-    return value as sanitizeResult<V,C,R>;
+    return value as sanitizeResult<V,C,R,M>;
   if((charset.match(/([^])-([^])/gm)??[]).find(element => !["a-z","A-Z","0-9","---"].includes(element)) !== undefined)
     throw new TypeError(`Unrecognized charset: "${charset}"!`);
   if(replacement.length !== 1)
@@ -213,17 +257,29 @@ export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z
     // Try to convert string to uppercase or lowercase based on charset.
     valueString = !/[A-Z]/.test(charset) ? valueString.toLowerCase() :
       !/[a-z]/.test(charset) ? valueString.toUpperCase() : valueString;
-    // A string sanitization logic
-    valueString = valueString
-      // Slice to the nearest valid character.
-      .slice(valueString.search(regexp.valid))
-      // Replace the rest with the replacement character.
-      .replaceAll(regexp.invalid,replacement)
+    // Trim string based on the trimMode
+    switch(trimMode) {
+      case "both":
+      //@ts-expect-error – fallthrough intended
+      case "left":
+        valueString = valueString.slice(valueString.search(regexp.valid));
+        if(trimMode === "left")
+          break;
+      //@ts-expect-error – fallthrough intended
+      case "right":
+        valueString = valueString.slice(0,valueString.length-Array.from(valueString).reverse().findIndex(c => regexp.valid.test(c)))
+      case null:
+        break;
+      default:
+        throw new TypeError(`Invalid trim mode: "${trimMode}"`);
+    }
+    // Replace the rest with the replacement character.
+    valueString = valueString.replaceAll(regexp.invalid,replacement)
   }
   // Do not accept the empty strings 
   if(valueString.length === 0)
     throw new Error("Parameter 'name' is not sanitizable!");
-  return valueString as sanitizeResult<V,C,R>;
+  return valueString as sanitizeResult<V,C,R,M>;
 }
 
 export default sanitizeLiteral;
