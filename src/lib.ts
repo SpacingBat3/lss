@@ -6,7 +6,7 @@
 
 /**
  * Sets of chars that are correctly understood by current engine and can be
- * transformed to valid {@link charset}.
+ * transformed to valid {@linkcode charset}.
  * 
  * @since v1.0.0
  */
@@ -175,7 +175,7 @@ type charGroups<T extends string> = (
 );
 
 /**
- * Transforms {@link sanitizeResult} function parameters to provide an expected
+ * Transforms {@link sanitizeLiteral} function parameters to provide an expected
  * result type for a given set of literals.
  * 
  * @template V - Value to be sanitized.
@@ -194,7 +194,8 @@ export type sanitizeResult<V,C extends string,R extends string, M extends trimMo
 /**
  * A type-safe string sanitizer supporting any set of chars while being capable
  * of calculating the expected result as a static type if literal is provided as
- * a name.
+ * a name. Predicts the accurate output based on input types or errors (`never`)
+ * if function is guaranteed to fail in the runtime.
  * 
  * @remarks
  * 
@@ -202,10 +203,9 @@ export type sanitizeResult<V,C extends string,R extends string, M extends trimMo
  * under-the-hood), however be aware of long compilation times as TypeScript
  * will have to do heavy calculations for function result in case of complex
  * strings and character sets (a lot of operations are done in char-by-char
- * manner, using type recursion — there's a real chance that for long strings
- * TypeScript will just give up at calculations and end compilation with an
- * error!). There are also no complete guarantees types will be accurate for all
- * cases, althrough that should be considered as a bug.
+ * manner, using `infer` and type recursion — there's a real chance that for
+ * very long literal strings TypeScript will just give up at calculations and
+ * end compilation with an error!).
  * 
  * [`RegExp`]: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp "RegExp – JavaScript | MDN"
  * 
