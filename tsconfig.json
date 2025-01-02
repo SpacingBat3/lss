@@ -28,5 +28,5 @@
         /* Disable verbatim module syntax, it makes exporting types complex without any advantages. */
         "verbatimModuleSyntax": false
     },
-    "files": ["src/lib.ts", "src/lib.mts"]
+    "files": ["src/lib.ts"]
 }

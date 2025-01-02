@@ -1,22 +1,10 @@
 {
   "name": "@spacingbat3/lss",
   "version": "1.2.0",
-  "description": "LSS: Literal String Sanitizer – sanitizes string based on specific inputs and tries to guess the accurate type (in TypeScript/Typed JS).",
+  "description": "LSS: Literal String Sanitizer – sanitizes string based on specific inputs and calculates the accurate result type (in TypeScript/Typed JS).",
+  "type": "module",
   "main": "./dist/lib.js",
-  "module": "./dist/lib.mjs",
   "types": "./types/lib.d.ts",
-  "exports": {
-    ".": {
-      "import": {
-        "types": "./types/lib.d.mts",
-        "default": "./dist/lib.mjs"
-      },
-      "default": {
-        "types": "./types/lib.d.ts",
-        "default": "./dist/lib.js"
-      }
-    }
-  },
   "scripts": {
     "prepack": "tsc",
     "make": "tsc",
