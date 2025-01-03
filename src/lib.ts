@@ -16,7 +16,17 @@ export const parseableRange = Object.freeze(["a-z","A-Z","0-9","---"] as const);
  * Like `unknown`, except it includes some primitive type just so generics can
  * pick any commonly-used primitive type.
  */
-export type unknownLiteral = null|undefined|object|string|number|bigint;
+export type unknownLiteral = string|number|bigint|symbol|object|null|undefined|{};
+
+/**
+ * A type alias that will, in the future, act like `never` but have context of
+ * any type you want. This gives type-strong response about error types when
+ * it is certain those will happen.
+ * 
+ * Right now it's just `never` :(
+ */
+//@ts-ignore
+type throws<_TODO_> = never;
 
 /**
  * A valid mode for trimming the string. `null` skips trimming entirely.
@@ -157,8 +167,8 @@ type ensureChar<T extends string> = (
   ) : never
 );
 
-/** Ensures given string is non-empty. Resolves to `never` otherwise. */
-type ensureNonEmpty<T extends string> = T extends "" ? never : T;
+/** Ensures given string is non-empty. Resolves to `C` otherwise. */
+type ensureNonEmpty<T extends string,C = never> = T extends "" ? C : T;
 
 /** Resolves to last character from the given string. */
 type lastChar<T extends string> = (
@@ -186,9 +196,9 @@ type charGroups<T extends string> = (
 export type sanitizeResult<V,C extends string,R extends string, M extends trimMode> = (
   V extends null|undefined ? V : R extends ensureChar<R> ? (
     charGroups<C> extends parseableRange ? V extends string|number ? (
-      ensureNonEmpty<_replace<_trimMode<_case<stringify<V>,C>,C,M>,C,R>>
-    ) : string : never
-  ) : never
+      ensureNonEmpty<_replace<_trimMode<_case<stringify<V>,C>,C,M>,C,R>,throws<Error>>
+    ) : string : throws<TypeError>
+  ) : throws<RangeError>
 );
 
 /**
@@ -239,7 +249,7 @@ export type sanitizeResult<V,C extends string,R extends string, M extends trimMo
 export function sanitizeLiteral<V extends unknownLiteral,C extends string = "a-z0-9",R extends string = "-",M extends trimMode = "left">(value:V, charset="a-z0-9" as C, replacement="-" as R,trimMode="left" as M): sanitizeResult<V,C,R,M> {
   if(value === null || value === undefined)
     return value as sanitizeResult<V,C,R,M>;
-  if((charset.match(/([^])-([^])/gm)??[]).find(element => !["a-z","A-Z","0-9","---"].includes(element)) !== undefined)
+  if((charset.match(/([^])-([^])/gm)??[]).every(element => ["a-z","A-Z","0-9","---"].includes(element)))
     throw new TypeError(`Unrecognized charset: "${charset}"!`);
   if(replacement.length !== 1)
     throw new RangeError("Parameter 'replacement' should be a valid character");
