@@ -8,7 +8,8 @@
 ## About
 
 Sanitize any value (as nullish string) at runtime while preserving type accuracy.
-Clearly made for fun and to learn advanced operations on [template literals][ts1].
+Clearly made for fun and to learn advanced operations on [template literals][ts1],
+outside of just being a simple string sanitizer.
 
 Mostly documented using [TSDoc] within the source code.
 
